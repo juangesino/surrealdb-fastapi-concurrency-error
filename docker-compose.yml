@@ -1,0 +1,42 @@
+services:
+
+  server:
+    build:
+      context: server
+      dockerfile: Dockerfile
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 5057 --proxy-headers
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./server/app:/app
+    env_file: .env
+    ports:
+      - "5057:5057"
+    networks:
+      - default
+    depends_on:
+      - surrealdb
+
+  surrealdb:
+    image: surrealdb/surrealdb:v1.5.0
+    user: ":"
+    volumes:
+      - surrealdb-data:/data
+    env_file:
+      - .env
+    entrypoint: 
+      - /surreal 
+      - start 
+      - --log
+      - info
+      - --auth
+      - --user
+      - $DB_USER
+      - --pass
+      - $DB_PASSWORD
+      - file:/data/database.db
+    ports:
+      - 8000:8000
+
+volumes:
+  surrealdb-data: null
